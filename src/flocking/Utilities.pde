@@ -2,10 +2,9 @@ class vector {
   float x;
   float y;
   
-  // Random vector
   vector() {
-    x = random(-max_v, max_v);
-    y = random(-max_v, max_v);
+    this.x = 0;
+    this.y = 0;
   }
   
   vector(float x, float y) {
@@ -15,12 +14,17 @@ class vector {
 }
 
 class point extends vector {
+  float x;
+  float y;
+  
   point() {
     this.x = 0;
     this.y = 0;
   }
+  
   point(float x, float y) {
-    super(x, y);
+    this.x = x;
+    this.y = y;
   }
 }
 
@@ -44,6 +48,10 @@ point p(vector v) {
   return p(v.x, v.y);
 }
 
+vector v(point p) {
+  return v(p.x, p.y);
+}
+
 // Unit vector.
 vector u(vector v) {
   float m = m(v);
@@ -60,7 +68,7 @@ vector i(vector v) {
   return v(-v.x, -v.y);
 }
 
-// vector rotated by a.
+// vector rotated by a, in radians.
 // https://matthew-brett.github.io/teaching/rotation_2d.html
 vector r(vector v, float a) {
   float cos = cos(a);
@@ -70,16 +78,11 @@ vector r(vector v, float a) {
   return v(x, y);
 }
 
-// vector scaled by s.
-vector s(vector v, float s) {
-  return v(v.x * s, v.y * s);
-}
-
 // Distance between a and b.
-float d(vector a, vector b) {
+float d(point a, point b) {
   float d = sqrt(sq(a.x - b.x) + sq(a.y - b.y));
   if (Float.isNaN(d) || Float.isInfinite(d) || d <= 0 ) {
-    return .0001; // Return a small number that will be treated as a minimum distance.
+    return .0000001; // Return a small number that will be treated as a minimum distance.
   }
   return d;
 }
@@ -91,4 +94,8 @@ vector prod(vector v, float m) {
 
 vector sum(vector a, vector b) {
   return v(a.x + b.x, a.y + b.y);
+}
+
+point sum(point p, vector v) {
+  return p(p.x + v.x, p.y + v.y);
 }
