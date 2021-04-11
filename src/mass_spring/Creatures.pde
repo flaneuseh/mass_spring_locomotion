@@ -10,6 +10,20 @@ class Creature {
     points = new ArrayList<point_mass>();
   }
   
+  Creature(ArrayList<spring> springs, ArrayList<point_mass> points) {
+    if (springs != null) this.springs = springs;
+    if (points != null) this.points = points;
+  }
+  
+  Creature(spring[] springs, point_mass[] points) {
+    for (spring s: springs) {
+      add_spring(s);
+    }
+    for (point_mass p: points) {
+      add_point(p);
+    }
+  }
+  
   void draw() {
     for (spring s: springs) {
       s.draw();
