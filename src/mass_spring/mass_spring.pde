@@ -12,6 +12,12 @@
 // When pathing leave a trail of dots or fading trail. Do not preserve the entire path, as that quickly clutters the window.
 // * c - Clear the screen, but do not delete any boids. (This can be useful when creatures are leaving paths.)
 // 
+// 
+// Extras:
+// - multiple creatures that avoid eachother
+// - obstacles
+// - genetic algorithm optimized locomotion
+// 
 
 // Simulation Parameters
 boolean running = false;
@@ -24,11 +30,35 @@ color light_grey = #cccccc;
 int max_x = 1150;
 int max_y = 850;
 
+float dt = 1; // Time per step.
+
+Creature[] creatures;
 void setup() {
   size(1350, 850);
+  
+  Creature c = new Creature();
+  c.points = new point_mass[] {new point_mass(p(100, 100), null, 10)};
+  creatures = new Creature[] {c};
 }
 
 void draw() {
+  noStroke();
+  fill(black);
+  rect(0, 0, max_x, max_y);
+  show_controls();
+  
+  for (Creature c: creatures) {
+    c.draw();
+  }
+  if (running) {
+    update();
+  }
+}
+
+void update() {
+  for (Creature c: creatures) {
+    c.update();
+  }
 }
 
 int min_cx = max_x;
@@ -64,7 +94,7 @@ void show_controls() {
   
   fill(black);
   textSize(font_size);
-  text("CONTROLS", starting_cx, starting_cy);
+  text("CONTROLS", starting_cx + 40, starting_cy);
   
   boolean[] toggles = {};
   for (int i = 0; i < toggles.length; i++) {
@@ -154,6 +184,9 @@ void keyPressed() {
     case ' ':
       running = !running;
       println(running? "Play" : "Pause");
+      break;
+    case 's':
+      update();
       break;
     default:
       break;

@@ -13,7 +13,7 @@ class vector {
   }
 }
 
-class point extends vector {
+class point {
   float x;
   float y;
   
@@ -44,8 +44,16 @@ point p(float x, float y) {
   return new point(x, y);
 }
 
+point p(point p) {
+  return p(p.x, p.y);
+}
+
 point p(vector v) {
   return p(v.x, v.y);
+}
+
+vector v(vector v) {
+  return v(v.x, v.y);
 }
 
 vector v(point p) {
@@ -96,6 +104,31 @@ vector sum(vector a, vector b) {
   return v(a.x + b.x, a.y + b.y);
 }
 
+float dot(vector a, vector b) {
+  return a.x * b.x + a.y * b.y;
+}
+
 point sum(point p, vector v) {
   return p(p.x + v.x, p.y + v.y);
+}
+
+// Clamp a vector between a min and a max magnitude.
+vector clamp(float min, vector v, float max) {
+  float m = m(v);
+  if (m < min) return prod(u(v), min);
+  else if (m > max) return prod(u(v), max);
+  return v;
+}
+
+point wrap(point min, point p, point max) {
+  point w = p(p);
+  if (p.x < min.x) w.x = max.x - (min.x - p.x);
+  else if (p.x > max.x) w.x = min.x + (p.x - max.x);
+  if (p.y < min.y) w.y = max.y - (min.y - p.y);
+  else if (p.y > max.y) w.y = min.y + (p.y - max.y);
+  return w;
+}
+
+void line(point a, point b) {
+  line(a.x, a.y, b.x, b.y);
 }
