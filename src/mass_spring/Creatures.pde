@@ -54,6 +54,7 @@ class point_mass {
   vector v;  // velocity
   float m;   // mass
   vector F;  // force
+  String id;
   
   point_mass() {
     p = p();
@@ -63,17 +64,21 @@ class point_mass {
     F = v();
   }
   
-  point_mass(point p, vector v, float m) {
+  point_mass(String id, point p, vector v, float m) {
     this();
     if (p != null) this.p = p;
     if (v != null) this.v = v;
     this.m = m;
+    this.id = id;
   }
   
   void draw() {
     stroke(white);
     fill(white);
-    circle(p.x, p.y, 10);
+    circle(p.x, p.y, 12);
+    textSize(12);
+    fill(black);
+    text(id, p.x - 3, p.y + 5);
     F = v(); // Reset F after every draw so that it can be recalculated at each update.
   }
   
@@ -92,8 +97,8 @@ class point_mass {
 }
 
 int rest_spring_width = 4;
-float fk = .5;       // default spring constant.
-float fd = .01; //.0001; // default spring damping constant
+float fk = 1;       // default spring constant.
+float fd = .05;  // default spring damping constant
 class spring {
   point_mass a;
   point_mass b;
@@ -101,6 +106,7 @@ class spring {
   float k;        // spring constant
   float d;        // spring damping constant
   oscillator o;
+  String id = "";
   
   spring() {
     a = new point_mass();
@@ -112,15 +118,15 @@ class spring {
   
   spring(point_mass a, point_mass b, oscillator o) {
     this();
-    if (a != null) this.a = a;
-    if (b != null) this.b = b;
+    if (a != null) {this.a = a; this.id += a.id;}
+    if (b != null) {this.b = b; this.id += b.id;}
     this.o = o;
   }
   
   spring(point_mass a, point_mass b, float L) {
     this();
-    if (a != null) this.a = a;
-    if (b != null) this.b = b;
+    if (a != null) {this.a = a; this.id += a.id;}
+    if (b != null) {this.b = b; this.id += b.id;}
     this.L = L;
   }
   
@@ -130,11 +136,10 @@ class spring {
   }
   
   void draw() {
-    a.draw();
-    b.draw();
-    
     stroke(white);
     line(a.p, b.p);
+    a.draw();
+    b.draw();
   }
   
   void update() {
@@ -153,6 +158,8 @@ class spring {
     // Add spring force to existing point forces.
     a.F = sum(a.F, Fds);
     b.F = sum(b.F, prod(Fds, -1));
+    
+    println(id + ": " + m(D) + " -> " + L());
   }
 }
 
@@ -182,4 +189,16 @@ oscillator o(float L, float a, float f, float p) {
 
 float d(point_mass a, point_mass b){
   return d(a.p, b.p);
+}
+
+point_mass pm(String id, point p, vector v, float m) {
+  return new point_mass(id, p, v, m);
+}
+
+spring s(point_mass a, point_mass b, oscillator o) {
+  return new spring(a, b, o);
+}
+
+spring s(point_mass a, point_mass b, float L) {
+  return new spring(a, b, L);
 }

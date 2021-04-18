@@ -38,15 +38,14 @@ float ground_y = 500;
 Creature[] creatures;
 void setup() {
   size(1350, 850);
-  point_mass a = new point_mass(p(100, 100), null, 10);
-  point_mass b = new point_mass(p(100, 200), null, 10);
-  point_mass c = new point_mass(p(200, 150), null, 10);
-  oscillator o = new oscillator(100, .9, 1, PI);
+  point_mass a = pm("A", p(100, 400), null, 1);
+  point_mass b = pm("B", p(100, 500), null, 1);
+  point_mass c = pm("C", p(100, 500), null, 1);
   creatures = new Creature[]{
     new Creature(new spring[]{
-      new spring(a, b, o),
-      new spring(a, c, 100),
-      new spring(b, c, 100),
+      s(a, b, o(250, 0, .01, 4*PI/3)),
+      //s(a, c, o(d(a, c), 0, .01, 2*PI/3)),
+      //s(b, c, o(d(b, c), 0, .01, 0)),
     })
   };
   
@@ -204,6 +203,9 @@ void keyPressed() {
       break;
     case 's':
       update();
+      break;
+    case 'r':
+      setup();
       break;
     default:
       break;
