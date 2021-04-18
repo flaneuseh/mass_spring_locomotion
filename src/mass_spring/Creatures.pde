@@ -1,5 +1,7 @@
 float max_v = 10; // max velocity
-float kd = -.001;   // viscuous damping coefficient.
+float kd = 0;  // viscuous damping coefficient.
+vector g = v(0, 9.8); // gravitational force downwards.
+float e = .0000000000001; // not quite 0, for division by 0.
 
 class Creature {
   ArrayList<spring> springs;
@@ -10,17 +12,15 @@ class Creature {
     points = new ArrayList<point_mass>();
   }
   
-  Creature(ArrayList<spring> springs, ArrayList<point_mass> points) {
+  Creature(ArrayList<spring> springs) {
+    this();
     if (springs != null) this.springs = springs;
-    if (points != null) this.points = points;
   }
   
-  Creature(spring[] springs, point_mass[] points) {
+  Creature(spring[] springs) {
+    this();
     for (spring s: springs) {
       add_spring(s);
-    }
-    for (point_mass p: points) {
-      add_point(p);
     }
   }
   
@@ -57,7 +57,8 @@ class point_mass {
   
   point_mass() {
     p = p();
-    v = v(random(-max_v, max_v), random(-max_v, max_v));
+    v = v();
+    //v = v(random(-max_v, max_v), random(-max_v, max_v));
     v = clamp(0, v, max_v);
     F = v();
   }
@@ -70,69 +71,115 @@ class point_mass {
   }
   
   void draw() {
+    stroke(white);
     fill(white);
-    circle(p.x, p.y, m);
+    circle(p.x, p.y, 10);
     F = v(); // Reset F after every draw so that it can be recalculated at each update.
   }
   
   void update() {
-    F = sum(F, prod(v, kd));   // damping
+    F = sum(F, g); // gravitational pull
+    F = sum(F, prod(v, -kd));   // damping
     
     vector a = prod(F, m); // acceleration F = ma
     v = sum(v, prod(a, dt));
     v = clamp(0, v, max_v);
+    if (abs(m(v)) < .1) v = v();
     p = sum(p, prod(v, dt));
+    if (p.y > ground_y) p.y = ground_y;
     p = wrap(p(0, 0), p, p(max_x, max_y));
   }
 }
 
 int rest_spring_width = 4;
-float fk = 10; // default spring constant.
+float fk = .5;       // default spring constant.
+float fd = .01; //.0001; // default spring damping constant
 class spring {
   point_mass a;
   point_mass b;
   float L;        // rest length
   float k;        // spring constant
+  float d;        // spring damping constant
+  oscillator o;
   
   spring() {
     a = new point_mass();
     b = new point_mass();
     L = 0;
     k = fk;
+    d = fd;
   }
   
-  spring(point_mass a, point_mass b, float L, float k) {
+  spring(point_mass a, point_mass b, oscillator o) {
+    this();
+    if (a != null) this.a = a;
+    if (b != null) this.b = b;
+    this.o = o;
+  }
+  
+  spring(point_mass a, point_mass b, float L) {
+    this();
     if (a != null) this.a = a;
     if (b != null) this.b = b;
     this.L = L;
-    if (k != 0) this.k = k;
+  }
+  
+  float L() {
+    if (o != null) return o.L();
+    return L;
   }
   
   void draw() {
     a.draw();
     b.draw();
     
-    float d_ab = d(a.p, b.p);
-    float inv_percent_L = L/d_ab;
-    int spring_width = min(round(inv_percent_L * rest_spring_width), 1); // thicker when shorter, thinner when longer
-    
-    strokeWeight(spring_width);
+    stroke(white);
     line(a.p, b.p);
-    strokeWeight(1);
   }
   
   void update() {
-    // Spring force for a = -(k(distance - L) + kd(u((a.v - b.v) . (a.p - b.p)))u(a.p - b.p) 
+    // Damped spring force for a:
+    // D = a.p - b.p   V = a.v - b.v
+    // spring force Fs = -k(|D| - L)  
+    // damping force Fd = -kd(V . D) / |D|
+    // damped spring force Fds = (Fs + Fd) * u(D)
     // From Sticky Feet: Evolution in a Multi-Creature Physical Simulation https://gatech.instructure.com/courses/179608/files/21490663?wrap=1
-    vector delta_p = sum(v(a.p), prod(v(b.p), -1)); // pa - pb
-    vector delta_v = sum(a.v, prod(b.v, -1));       // va - vb
-    float current_distance = d(a.p, b.p);
-    float spring_force = k * (current_distance - L); 
-    float damping_force = kd * dot(delta_v, delta_p) / min(m(delta_p), .0001); 
-    vector F = prod(u(delta_p), -(spring_force + damping_force));        
+    vector D = sum(v(a.p), i(v(b.p)));       // a.p - b.p
+    vector V = sum(a.v, i(b.v));             // a.v - b.v        
+    float Fs = -(k * (m(D) - L()));            // -k(|D| - L)
+    float Fd = -d * dot(V, D) / (m(D) > 0? m(D) : e);   // -kd(V . D) / |D|
+    vector Fds = prod((m(D) > 0? u(D) : v(e, e)), Fs + Fd);        // (Fs + Fd) * u(D) 
     
     // Add spring force to existing point forces.
-    a.F = sum(a.F, F);
-    b.F = sum(b.F, prod(F, -1));
+    a.F = sum(a.F, Fds);
+    b.F = sum(b.F, prod(Fds, -1));
   }
+}
+
+class oscillator {
+  float L;       // original length
+  float a;       // amplitude
+  float f;       // frequency
+  float p;       // phase
+  
+  oscillator(float L, float a, float f, float p) {
+    this.L = L;
+    this.a = a;
+    this.f = f;
+    this.p = p;
+  }
+  
+  // L = L(1 + asin(ft + 2PIp))
+  // From Sticky Feet: Evolution in a Multi-Creature Physical Simulation https://gatech.instructure.com/courses/179608/files/21490663?wrap=1
+  float L() {
+    return L * (1 + a * sin((f * t) + (2 * PI * p)));
+  }
+}
+
+oscillator o(float L, float a, float f, float p) {
+  return new oscillator(L, a, f, p);
+}
+
+float d(point_mass a, point_mass b){
+  return d(a.p, b.p);
 }

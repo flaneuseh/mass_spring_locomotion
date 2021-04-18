@@ -30,15 +30,26 @@ color light_grey = #cccccc;
 int max_x = 1150;
 int max_y = 850;
 
-float dt = 1; // Time per step.
+float dt = .5; // Time per update step.
+float t = 0;    // current time.
+
+float ground_y = 500;
 
 Creature[] creatures;
 void setup() {
   size(1350, 850);
+  point_mass a = new point_mass(p(100, 100), null, 10);
+  point_mass b = new point_mass(p(100, 200), null, 10);
+  point_mass c = new point_mass(p(200, 150), null, 10);
+  oscillator o = new oscillator(100, .9, 1, PI);
+  creatures = new Creature[]{
+    new Creature(new spring[]{
+      new spring(a, b, o),
+      new spring(a, c, 100),
+      new spring(b, c, 100),
+    })
+  };
   
-  Creature c = new Creature();
-  c.points = new point_mass[] {new point_mass(p(100, 100), null, 10)};
-  creatures = new Creature[] {c};
 }
 
 void draw() {
@@ -53,9 +64,15 @@ void draw() {
   if (running) {
     update();
   }
+  
+  stroke(white);
+  strokeWeight(10);
+  line(0, ground_y + 10, max_x, ground_y + 10);
+  strokeWeight(1);
 }
 
 void update() {
+  t += dt;
   for (Creature c: creatures) {
     c.update();
   }
