@@ -30,7 +30,7 @@ color light_grey = #cccccc;
 int max_x = 1150;
 int max_y = 850;
 
-float dt = .5; // Time per update step.
+float dt = .25; // Time per update step.
 float t = 0;    // current time.
 
 float ground_y = 500;
@@ -38,14 +38,34 @@ float ground_y = 500;
 Creature[] creatures;
 void setup() {
   size(1350, 850);
-  point_mass a = pm("A", p(100, 400), null, 1);
-  point_mass b = pm("B", p(100, 500), null, 1);
-  point_mass c = pm("C", p(100, 500), null, 1);
+  point_mass a = pm("A", p(150, 450), null, 1);
+  point_mass b = pm("B", p(150, 500), null, 1);
+  
+  vector vab = v(a.p, b.p);
+  float rads = PI/3;
+  point_mass c = pm("C", sum(a.p, r(vab, 1*rads)), null, 1);
+  point_mass d = pm("D", sum(a.p, r(vab, 2*rads)), null, 1);
+  point_mass e = pm("E", sum(a.p, r(vab, 3*rads)), null, 1);
+  point_mass f = pm("F", sum(a.p, r(vab, 4*rads)), null, 1);
+  point_mass g = pm("G", sum(a.p, r(vab, 5*rads)), null, 1);
+  
+  //s(a, b, o(87.5, .43, PI/16, .25)), // 125
+  //s(b, c, o(87.5, .43, PI/16, .75)), // 50
+  //s(a, c, o(87.5, .43, PI/16, .43)), // 100
   creatures = new Creature[]{
     new Creature(new spring[]{
-      s(a, b, o(250, 0, .01, 4*PI/3)),
-      //s(a, c, o(d(a, c), 0, .01, 2*PI/3)),
-      //s(b, c, o(d(b, c), 0, .01, 0)),
+      s(a, b), 
+      s(a, c, o(d(a, c), .25, PI/16, 0)), 
+      s(a, d), 
+      s(a, e, o(d(a, c), .25, PI/16, 1/3)), 
+      s(a, f), 
+      s(a, g, o(d(a, c), .25, PI/16, 2/3)),
+      s(b, c), 
+      s(c, d), 
+      s(d, e), 
+      s(e, f), 
+      s(f, g), 
+      s(g, b),
     })
   };
   

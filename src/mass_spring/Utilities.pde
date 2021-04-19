@@ -60,6 +60,10 @@ vector v(point p) {
   return v(p.x, p.y);
 }
 
+vector v(point a, point b) {
+  return sum(v(b), i(v(a)));
+}
+
 // Unit vector.
 vector u(vector v) {
   float m = m(v);
@@ -88,7 +92,13 @@ vector r(vector v, float a) {
 
 // Distance between a and b.
 float d(point a, point b) {
-  float d = sqrt(sq(a.x - b.x) + sq(a.y - b.y));
+  float dx = a.x - b.x;
+  float d_wrap_x = max_x - dx;
+  dx = min(dx, d_wrap_x);
+  float dy = a.y - b.y;
+  float d_wrap_y = max_y - dy;
+  dx = min(dx, d_wrap_y);
+  float d = sqrt(sq(dx) + sq(dy));
   if (Float.isNaN(d) || Float.isInfinite(d) || d <= 0 ) {
     return .0000001; // Return a small number that will be treated as a minimum distance.
   }
