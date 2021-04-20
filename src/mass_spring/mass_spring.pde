@@ -39,34 +39,43 @@ Creature[] creatures;
 void setup() {
   size(1350, 850);
   point_mass a = pm("A", p(150, 450), null, 1);
-  point_mass b = pm("B", p(150, 500), null, 1);
-  
-  vector vab = v(a.p, b.p);
   float rads = PI/3;
-  point_mass c = pm("C", sum(a.p, r(vab, 1*rads)), null, 1);
-  point_mass d = pm("D", sum(a.p, r(vab, 2*rads)), null, 1);
-  point_mass e = pm("E", sum(a.p, r(vab, 3*rads)), null, 1);
-  point_mass f = pm("F", sum(a.p, r(vab, 4*rads)), null, 1);
-  point_mass g = pm("G", sum(a.p, r(vab, 5*rads)), null, 1);
+  
+  point p = p(150, 500);
+  vector vap = v(a.p, p);
+  point pb = sum(a.p, r(vap, 1*rads/2));
+  vector vab = v(a.p, pb);
+  a.p.y += ground_y - pb.y;
+  
+  point_mass b = pm("B", sum(a.p, vab), null, 1);
+  
+  point_mass c = pm("C", sum(a.p, r(vab, -1*rads)), null, 1);
+  point_mass d = pm("D", sum(a.p, r(vab, -2*rads)), null, 1);
+  point_mass e = pm("E", sum(a.p, r(vab, -3*rads)), null, 1);
+  point_mass f = pm("F", sum(a.p, r(vab, -4*rads)), null, 1);
+  point_mass g = pm("G", sum(a.p, r(vab, -5*rads)), null, 1);
   
   //s(a, b, o(87.5, .43, PI/16, .25)), // 125
   //s(b, c, o(87.5, .43, PI/16, .75)), // 50
   //s(a, c, o(87.5, .43, PI/16, .43)), // 100
   creatures = new Creature[]{
     new Creature(new spring[]{
-      s(a, b), 
-      s(a, c, o(d(a, c), .25, PI/16, 0)), 
-      s(a, d), 
-      s(a, e, o(d(a, c), .25, PI/16, 1/3)), 
-      s(a, f), 
-      s(a, g, o(d(a, c), .25, PI/16, 2/3)),
+      s(a, b, o(d(a, b), .25, PI/32, PI/2)), 
+      s(a, c, o(d(a, b), .25, PI/32, 3*PI/2)),
+      s(a, d, o(d(a, d), .25, PI/16, PI/2)), 
+      s(a, e, o(d(a, b), .25, PI/16, PI/2)),
+      s(a, f),// o(d(a, b), .25, PI/16, 2*PI/3)),
+      s(a, g),// o(d(a, b), .25, PI/16, 5*PI/3)),
       s(b, c), 
       s(c, d), 
       s(d, e), 
       s(e, f), 
       s(f, g), 
       s(g, b),
-    })
+    }),
+    //new Creature(new spring[]{
+    //  s(pm("A", p(500, 100), null, 1), pm("B", p(500, 200), null, 1), o(100, .9, PI/16, 0))
+    //})
   };
   
 }

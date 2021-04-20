@@ -42,14 +42,17 @@ class point_mass {
   
   void update() {
     F = sum(F, g); // gravitational pull
-    F = sum(F, prod(v, -kd));   // dampin
+    F = sum(F, prod(v, -kd));   // damping
     
     vector a = prod(F, m); // acceleration F = ma
     v = sum(v, prod(a, dt));
     v = clamp(0, v, max_v);
     if (abs(m(v)) < .1) v = v();
     p = sum(p, prod(v, dt));
-    if (p.y > ground_y) p.y = ground_y;
+    if (p.y > ground_y) {
+      float t = (p.y - ground_y)/v.y; // time traveled "through" the ground.
+      p.y = ground_y - v.y*t;         // bounce back up.
+    }
     if (p.x < 0) p.x = 0;
     if (p.x > max_x) p.x = max_x;
   }
@@ -139,7 +142,7 @@ class oscillator {
   // L = L(1 + asin(ft + 2PIp))
   // From Sticky Feet: Evolution in a Multi-Creature Physical Simulation https://gatech.instructure.com/courses/179608/files/21490663?wrap=1
   float L() {
-    return L * (1 + a * sin((f * t) + (2 * PI * p)));
+    return L * (1 + a * sin((f * t) + p));
   }
 }
 
