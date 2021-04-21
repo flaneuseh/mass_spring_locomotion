@@ -38,6 +38,8 @@ float ground_y = 500;
 Creature[] creatures;
 void setup() {
   size(1350, 850);
+  
+  // Wheel Creature.
   point_mass a = pm("A", p(150, 450), null, 1);
   float rads = PI/3;
   
@@ -48,34 +50,51 @@ void setup() {
   a.p.y += ground_y - pb.y;
   
   point_mass b = pm("B", sum(a.p, vab), null, 1);
-  
   point_mass c = pm("C", sum(a.p, r(vab, -1*rads)), null, 1);
   point_mass d = pm("D", sum(a.p, r(vab, -2*rads)), null, 1);
   point_mass e = pm("E", sum(a.p, r(vab, -3*rads)), null, 1);
   point_mass f = pm("F", sum(a.p, r(vab, -4*rads)), null, 1);
   point_mass g = pm("G", sum(a.p, r(vab, -5*rads)), null, 1);
   
+  Creature whirligig = new Creature(new spring[]{
+    s(a, b, o(d(a, b), .25, PI/32, PI/2)), 
+    s(a, c, o(d(a, b), .25, PI/32, 3*PI/2)),
+    s(a, d, o(d(a, d), .25, PI/16, PI/2)), 
+    s(a, e, o(d(a, b), .25, PI/16, PI/2)),
+    s(a, f),// o(d(a, b), .25, PI/16, 2*PI/3)),
+    s(a, g),// o(d(a, b), .25, PI/16, 5*PI/3)),
+    s(b, c), 
+    s(c, d), 
+    s(d, e), 
+    s(e, f), 
+    s(f, g), 
+    s(g, b),
+  });
+  
+  spring[] springs = new spring[19];
+  int s = 0;
+  for(int i = 0; i < 10; i++) {
+    int x = 100 + i*20;
+    int y0 = 500;
+    int y1 = 450;
+    springs[s++] = new spring(
+      new point_mass("0", p(x, y0), null, 1),
+      new point_mass("1", p(x, y1), null, 1)
+    );
+    if (i == 0) continue;
+    //spring s0 = new spring(springs[s-2].a, springs[s-1].a);
+    spring s1 = new spring(springs[s-2].b, springs[s-1].b);
+    //springs[s++] = s0;
+    springs[s++] = s1;
+  }
+  
+  Creature inchworm = new Creature(springs);
   //s(a, b, o(87.5, .43, PI/16, .25)), // 125
   //s(b, c, o(87.5, .43, PI/16, .75)), // 50
   //s(a, c, o(87.5, .43, PI/16, .43)), // 100
   creatures = new Creature[]{
-    new Creature(new spring[]{
-      s(a, b, o(d(a, b), .25, PI/32, PI/2)), 
-      s(a, c, o(d(a, b), .25, PI/32, 3*PI/2)),
-      s(a, d, o(d(a, d), .25, PI/16, PI/2)), 
-      s(a, e, o(d(a, b), .25, PI/16, PI/2)),
-      s(a, f),// o(d(a, b), .25, PI/16, 2*PI/3)),
-      s(a, g),// o(d(a, b), .25, PI/16, 5*PI/3)),
-      s(b, c), 
-      s(c, d), 
-      s(d, e), 
-      s(e, f), 
-      s(f, g), 
-      s(g, b),
-    }),
-    //new Creature(new spring[]{
-    //  s(pm("A", p(500, 100), null, 1), pm("B", p(500, 200), null, 1), o(100, .9, PI/16, 0))
-    //})
+    // whirligig,
+     inchworm
   };
   
 }
