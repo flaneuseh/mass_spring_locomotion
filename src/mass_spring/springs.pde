@@ -63,7 +63,7 @@ class point_mass {
     F = sum(F, g); // gravitational pull
     F = sum(F, prod(v, -kv));   // damping
     
-    if (ground_y - p.y < 3) { 
+    if (grounded()) { 
       // If grounded, apply friction in the x direction.
       float ff = v.x * kf(); // friction force.
       if (abs(ff) > abs(F.x)) {
@@ -88,6 +88,10 @@ class point_mass {
   float kf() {
     if (fo != null) return fo.kf();
     return kf;
+  }
+  
+  boolean grounded() {
+    return ground_y - p.y < 3;
   }
 }
 
@@ -141,6 +145,11 @@ class spring {
     return L;
   }
   
+  float avgL() {
+    if (o != null) return o.L();
+    return L;
+  }
+  
   void draw() {
     stroke(white);
     line(a.p, b.p);
@@ -156,7 +165,7 @@ class spring {
     // damped spring force Fds = (Fs + Fd) * u(D)
     // From Sticky Feet: Evolution in a Multi-Creature Physical Simulation https://gatech.instructure.com/courses/179608/files/21490663?wrap=1
     vector D = sum(v(a.p), i(v(b.p)));       // a.p - b.p
-    vector V = sum(a.v, i(b.v));             // a.v - b.v        
+    vector V = sum(a.v, i(b.v));             // a.v - b.v    
     float Fs = -(k * (m(D) - L()));            // -k(|D| - L)
     float Fd = -d * dot(V, D) / (m(D) > 0? m(D) : e);   // -kd(V . D) / |D|
     vector Fds = prod((m(D) > 0? u(D) : v(e, e)), Fs + Fd);        // (Fs + Fd) * u(D) 
@@ -172,6 +181,10 @@ class oscillator {
   float a;       // amplitude
   float f;       // frequency
   float p;       // phase
+  float r;       // time spent resting
+  float m;       // time spent moving
+  boolean resting;
+  float count;   // how long we have spent resting or not resting
   
   oscillator(float L, float a, float f, float p) {
     this.L = L;
@@ -180,9 +193,30 @@ class oscillator {
     this.p = p;
   }
   
+  oscillator(float L, float a, float f, float p, float r, float m) {
+    this(L, a, f, p);
+    this.r = r;
+    this.m = m;
+  }
+  
   // L = L(1 + asin(ft + 2PIp))
   // From Sticky Feet: Evolution in a Multi-Creature Physical Simulation https://gatech.instructure.com/courses/179608/files/21490663?wrap=1
   float L() {
+    if (r > 0) {
+      if (resting) {
+        if (count >= r){
+          // return to movement.
+          resting = !resting;
+          count = 0;
+        }
+        return L;
+      }
+      if (count >= m) {
+        // return to rest.
+        resting = !resting;
+        count = 0;
+      }
+    }
     return L * (1 + a * sin((f * t) + p));
   }
 }
@@ -209,6 +243,10 @@ class friction {
 
 oscillator o(float L, float a, float f, float p) {
   return new oscillator(L, a, f, p);
+}
+
+oscillator o(float L, float a, float f, float p, float r, float m) {
+  return new oscillator(L, a, f, p, r, m);
 }
 
 friction f(float min, float max, float f, float p) {

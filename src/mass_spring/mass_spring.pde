@@ -19,7 +19,9 @@
 // - genetic algorithm optimized locomotion
 //
 // TODO
-// - fix inchworm
+// - make inchworm more interesting:
+//   - raise middle section 
+//   - stagger oscillation
 // - fix whirligig
 // - writeup
 // - controls
@@ -51,21 +53,24 @@ void setup() {
   int curr = 0;
   int prev = 0;
   
-  int num_spokes = 7;
+  int num_spokes = 6;
   point_mass center = pm(p(150, 450)); // center
   float spoke_angle = 2*PI/num_spokes;
   
   point ground = p(150, 500);   // reference point on ground.
   vector vcg = v(center.p, ground);  // vector to ground.
   
-  point cg = sum(center.p, r(vcg, -1*spoke_angle/2)); // point resting on ground below center.
+  point cg = sum(center.p, r(vcg, 1*spoke_angle/2)); // point resting on ground below center.
   vcg = v(center.p, cg);                             // Vector between center and ground point.
   center.p.y += ground_y - cg.y;                     // Adjust center for spoke length.
   
   for (int i = 0; i < num_spokes; i++) {
     curr = springs.size();
-    point_mass spoke = pm(sum(center.p, r(vcg, -i*spoke_angle)));
-    oscillator o = o(d(spoke, center), .25, PI/16, PI * i%2);
+    point_mass spoke = pm(sum(center.p, r(vcg, i*spoke_angle)));
+    float difference = PI * i%2; // -i*PI/num_spokes*/
+    float freq = PI/16;
+    //oscillator o = o(d(spoke, center), .25, freq, PI/2 + difference, PI/difference, PI/difference);
+    oscillator o = o(d(spoke, center), .25, freq, PI/2 + difference, PI/difference, PI/difference);
     springs.add(s(center, spoke, o));
     if (i == 0) continue;
     springs.add(new spring(springs.get(prev).b, springs.get(curr).b));
@@ -80,11 +85,11 @@ void setup() {
   curr = 0;
   prev = 0;
   int spacing = 20;
-  int num_segments = 4;
+  int num_segments = 6;
   for(int i = 0; i < num_segments; i++) {
     int x = 100 + i*spacing;
     int y0 = 500;
-    int y1 = 450;
+    int y1 = (i > 1 && i < 4)? y0 - 56 : y0 - 50;
     curr = springs.size();
     point_mass pb = pm(p(x, y0));
     point_mass pt = pm(p(x, y1));
@@ -92,7 +97,7 @@ void setup() {
     if (i == num_segments - 1) pb.fo = f(0, 100, PI/16, 3*PI/2); // Friction decreases as length increases.
     springs.add(s(pb, pt, d(pb, pt))); // vertical
     if (i == 0) continue;
-    oscillator o = o(spacing, .5, PI/16, PI/2);
+    oscillator o = o(spacing, .5, PI/16, PI/2 /*+ PI*i/num_segments*/);
     point_mass p_a = springs.get(prev).a;
     point_mass p_b = springs.get(prev).b;
     point_mass c_a = springs.get(curr).a;
@@ -110,8 +115,8 @@ void setup() {
   Creature inchworm = new Creature(springs);
   
   creatures = new Creature[]{
-    //whirligig
-    inchworm
+    whirligig
+    //inchworm
   };
   
 }
