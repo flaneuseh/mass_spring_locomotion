@@ -80,17 +80,17 @@ void setup() {
   curr = 0;
   prev = 0;
   int spacing = 20;
-  for(int i = 0; i < 2; i++) {
+  int num_segments = 4;
+  for(int i = 0; i < num_segments; i++) {
     int x = 100 + i*spacing;
     int y0 = 500;
     int y1 = 450;
     curr = springs.size();
-    friction fleft = f(0, 3, PI/16, PI/2);  // Friction increases as length increses.
-    friction fright = f(0, 3, PI/16, 3*PI/2);     // Friction decreases as length increases.
-    friction f = (i == 0)? fleft : fright;
-    point_mass pb = pm(p(x, y0), 1, f);
-    point_mass pt = pm(p(x, y1), 1, f);
-    springs.add(s(pb, pt, d(pb, pt), 15)); // vertical
+    point_mass pb = pm(p(x, y0));
+    point_mass pt = pm(p(x, y1));
+    if (i == 0) pb.fo = f(0, 3, PI/16, PI/2);                  // Friction increases as length increases.
+    if (i == num_segments - 1) pb.fo = f(0, 100, PI/16, 3*PI/2); // Friction decreases as length increases.
+    springs.add(s(pb, pt, d(pb, pt))); // vertical
     if (i == 0) continue;
     oscillator o = o(spacing, .5, PI/16, PI/2);
     point_mass p_a = springs.get(prev).a;
@@ -99,8 +99,8 @@ void setup() {
     point_mass c_b = springs.get(curr).b;
     spring bottom = s(p_a, c_a, o);
     spring top = s(p_b, c_b, o);
-    spring forward_slash = s(p_a, c_b, d(p_a, c_b), 15);
-    spring back_slash = s(p_b, c_a,  d(p_a, c_b), 15);
+    spring forward_slash = s(p_a, c_b, d(p_a, c_b));
+    spring back_slash = s(p_b, c_a,  d(p_a, c_b));
     springs.add(bottom);
     springs.add(top);
     springs.add(forward_slash);

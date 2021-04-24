@@ -62,7 +62,15 @@ class point_mass {
   void update() {
     F = sum(F, g); // gravitational pull
     F = sum(F, prod(v, -kv));   // damping
-    if (ground_y - p.y < 3) F.x = F.x + v.x*-kf();     // If grounded, apply friction in the x direction.
+    
+    if (ground_y - p.y < 3) { 
+      // If grounded, apply friction in the x direction.
+      float ff = v.x * kf(); // friction force.
+      if (abs(ff) > abs(F.x)) {
+        ff = F.x; // Friction should not reverse the direction of the force, just negate it.
+      }
+      F.x = F.x - ff;     
+    }
     
     vector a = prod(F, m); // acceleration F = ma
     v = sum(v, prod(a, dt));
