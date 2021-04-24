@@ -9,7 +9,9 @@ class Creature {
   
   Creature(ArrayList<spring> springs) {
     this();
-    if (springs != null) this.springs = springs;
+    for (spring s: springs) {
+      add_spring(s);
+    }
   }
   
   Creature(spring[] springs) {

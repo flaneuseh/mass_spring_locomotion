@@ -17,6 +17,13 @@
 // - multiple creatures that avoid eachother
 // - obstacles
 // - genetic algorithm optimized locomotion
+//
+// TODO
+// - fix inchworm
+// - fix whirligig
+// - writeup
+// - controls
+// - reset should reset velocity/forces as well as positions.
 // 
 
 // Simulation Parameters
@@ -39,62 +46,72 @@ Creature[] creatures;
 void setup() {
   size(1350, 850);
   
-  // Wheel Creature.
-  point_mass a = pm("A", p(150, 450), null, 1);
-  float rads = PI/3;
+  // Whirligig
+  ArrayList<spring> springs = new ArrayList<spring>();
+  int curr = 0;
+  int prev = 0;
   
-  point p = p(150, 500);
-  vector vap = v(a.p, p);
-  point pb = sum(a.p, r(vap, 1*rads/2));
-  vector vab = v(a.p, pb);
-  a.p.y += ground_y - pb.y;
+  int num_spokes = 7;
+  point_mass center = pm(p(150, 450)); // center
+  float spoke_angle = 2*PI/num_spokes;
   
-  point_mass b = pm("B", sum(a.p, vab), null, 1);
-  point_mass c = pm("C", sum(a.p, r(vab, -1*rads)), null, 1);
-  point_mass d = pm("D", sum(a.p, r(vab, -2*rads)), null, 1);
-  point_mass e = pm("E", sum(a.p, r(vab, -3*rads)), null, 1);
-  point_mass f = pm("F", sum(a.p, r(vab, -4*rads)), null, 1);
-  point_mass g = pm("G", sum(a.p, r(vab, -5*rads)), null, 1);
+  point ground = p(150, 500);   // reference point on ground.
+  vector vcg = v(center.p, ground);  // vector to ground.
   
-  Creature whirligig = new Creature(new spring[]{
-    s(a, b, o(d(a, b), .25, PI/32, PI/2)), 
-    s(a, c, o(d(a, b), .25, PI/32, 3*PI/2)),
-    s(a, d, o(d(a, d), .25, PI/16, PI/2)), 
-    s(a, e, o(d(a, b), .25, PI/16, PI/2)),
-    s(a, f),// o(d(a, b), .25, PI/16, 2*PI/3)),
-    s(a, g),// o(d(a, b), .25, PI/16, 5*PI/3)),
-    s(b, c), 
-    s(c, d), 
-    s(d, e), 
-    s(e, f), 
-    s(f, g), 
-    s(g, b),
-  });
+  point cg = sum(center.p, r(vcg, -1*spoke_angle/2)); // point resting on ground below center.
+  vcg = v(center.p, cg);                             // Vector between center and ground point.
+  center.p.y += ground_y - cg.y;                     // Adjust center for spoke length.
   
-  spring[] springs = new spring[19];
-  int s = 0;
-  for(int i = 0; i < 10; i++) {
-    int x = 100 + i*20;
-    int y0 = 500;
-    int y1 = 450;
-    springs[s++] = new spring(
-      new point_mass("0", p(x, y0), null, 1),
-      new point_mass("1", p(x, y1), null, 1)
-    );
+  for (int i = 0; i < num_spokes; i++) {
+    curr = springs.size();
+    point_mass spoke = pm(sum(center.p, r(vcg, -i*spoke_angle)));
+    oscillator o = o(d(spoke, center), .25, PI/16, PI * i%2);
+    springs.add(s(center, spoke, o));
     if (i == 0) continue;
-    //spring s0 = new spring(springs[s-2].a, springs[s-1].a);
-    spring s1 = new spring(springs[s-2].b, springs[s-1].b);
-    //springs[s++] = s0;
-    springs[s++] = s1;
+    springs.add(new spring(springs.get(prev).b, springs.get(curr).b));
+    if (i == num_spokes - 1) springs.add(s(springs.get(curr).b, springs.get(0).b));
+    prev = curr;
   }
   
+  Creature whirligig = new Creature(springs);
+  
+  // Inchworm
+  springs = new ArrayList<spring>();
+  curr = 0;
+  prev = 0;
+  int spacing = 20;
+  for(int i = 0; i < 2; i++) {
+    int x = 100 + i*spacing;
+    int y0 = 500;
+    int y1 = 450;
+    curr = springs.size();
+    friction fleft = f(0, 3, PI/16, PI/2);  // Friction increases as length increses.
+    friction fright = f(0, 3, PI/16, 3*PI/2);     // Friction decreases as length increases.
+    friction f = (i == 0)? fleft : fright;
+    point_mass pb = pm(p(x, y0), 1, f);
+    point_mass pt = pm(p(x, y1), 1, f);
+    springs.add(s(pb, pt, d(pb, pt), 15)); // vertical
+    if (i == 0) continue;
+    oscillator o = o(spacing, .5, PI/16, PI/2);
+    point_mass p_a = springs.get(prev).a;
+    point_mass p_b = springs.get(prev).b;
+    point_mass c_a = springs.get(curr).a;
+    point_mass c_b = springs.get(curr).b;
+    spring bottom = s(p_a, c_a, o);
+    spring top = s(p_b, c_b, o);
+    spring forward_slash = s(p_a, c_b, d(p_a, c_b), 15);
+    spring back_slash = s(p_b, c_a,  d(p_a, c_b), 15);
+    springs.add(bottom);
+    springs.add(top);
+    springs.add(forward_slash);
+    springs.add(back_slash);
+    prev = curr;
+  }
   Creature inchworm = new Creature(springs);
-  //s(a, b, o(87.5, .43, PI/16, .25)), // 125
-  //s(b, c, o(87.5, .43, PI/16, .75)), // 50
-  //s(a, c, o(87.5, .43, PI/16, .43)), // 100
+  
   creatures = new Creature[]{
-    // whirligig,
-     inchworm
+    //whirligig
+    inchworm
   };
   
 }
@@ -113,8 +130,13 @@ void draw() {
   }
   
   stroke(white);
-  strokeWeight(10);
-  line(0, ground_y + 10, max_x, ground_y + 10);
+  strokeWeight(15);
+  line(0, ground_y + 15, max_x, ground_y + 15);
+  
+  int t = 0;
+  for (int i = 20; i < max_x-20; i += 20) {
+    text(t++, i, ground_y + 20);
+  }
   strokeWeight(1);
 }
 
