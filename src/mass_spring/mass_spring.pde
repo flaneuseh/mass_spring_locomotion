@@ -69,8 +69,8 @@ void setup() {
     point_mass spoke = pm(sum(center.p, r(vcg, -i*spoke_angle)));
     float phase = 0;
     float freq = PI/8;
-    float cycle = 2.5*PI/freq; // Time for a spoke to fully extend/retract.
-    rest r = r(cycle, cycle*(spokes-1), cycle*(spokes-i));  // move for one cycle; rest while the others move; offset to have each start moving in turn.
+    float cycle = 2*PI/freq; // Time for a spoke to fully extend/retract.
+    rest r = r(.95*cycle, cycle*(spokes-1), cycle*(spokes-i));  // move for one cycle; rest while the others move; offset to have each start moving in turn.
     oscillator o = o(d(spoke, center), .3, freq, phase, r);
     springs.add(s(center, spoke, o));
     if (i == 0) continue;
