@@ -53,9 +53,9 @@ void setup() {
   int curr = 0;
   int prev = 0;
   
-  int num_spokes = 6;
+  int spokes = 6;
   point_mass center = pm(p(150, 450)); // center
-  float spoke_angle = 2*PI/num_spokes;
+  float spoke_angle = 2*PI/spokes;
   
   point ground = p(150, 500);   // reference point on ground.
   vector vcg = v(center.p, ground);  // vector to ground.
@@ -64,21 +64,53 @@ void setup() {
   vcg = v(center.p, cg);                             // Vector between center and ground point.
   center.p.y += ground_y - cg.y;                     // Adjust center for spoke length.
   
-  for (int i = 0; i < num_spokes; i++) {
+  for (int i = 0; i < spokes; i++) {
     curr = springs.size();
-    point_mass spoke = pm(sum(center.p, r(vcg, i*spoke_angle)));
-    float difference = PI * i%2; // -i*PI/num_spokes*/
-    float freq = PI/16;
-    //oscillator o = o(d(spoke, center), .25, freq, PI/2 + difference, PI/difference, PI/difference);
-    oscillator o = o(d(spoke, center), .25, freq, PI/2 + difference, PI/difference, PI/difference);
+    point_mass spoke = pm(sum(center.p, r(vcg, -i*spoke_angle)));
+    float phase = 0;
+    float freq = PI/8;
+    float cycle = 2.5*PI/freq; // Time for a spoke to fully extend/retract.
+    rest r = r(cycle, cycle*(spokes-1), cycle*(spokes-i));  // move for one cycle; rest while the others move; offset to have each start moving in turn.
+    oscillator o = o(d(spoke, center), .3, freq, phase, r);
     springs.add(s(center, spoke, o));
     if (i == 0) continue;
     springs.add(new spring(springs.get(prev).b, springs.get(curr).b));
-    if (i == num_spokes - 1) springs.add(s(springs.get(curr).b, springs.get(0).b));
+    if (i == spokes - 1) springs.add(s(springs.get(curr).b, springs.get(0).b));
     prev = curr;
   }
   
   Creature whirligig = new Creature(springs);
+  
+  // Ticktock
+  //springs = new ArrayList<spring>();
+  //curr = 0;
+  //prev = 0;
+  
+  //spokes = 6;
+  //center = pm(p(150, 450)); // center
+  //spoke_angle = 2*PI/spokes;
+  
+  //ground = p(150, 500);   // reference point on ground.
+  //vcg = v(center.p, ground);  // vector to ground.
+  
+  //cg = sum(center.p, r(vcg, 1*spoke_angle/2)); // point resting on ground below center.
+  //vcg = v(center.p, cg);                             // Vector between center and ground point.
+  //center.p.y += ground_y - cg.y;                     // Adjust center for spoke length.
+  
+  //for (int i = 0; i < spokes; i++) {
+  //  curr = springs.size();
+  //  point_mass spoke = pm(sum(center.p, r(vcg, i*spoke_angle)));
+  //  float difference = (i == 0)? 0 : PI; // -i*PI/num_spokes*/
+  //  float freq = PI/8;
+  //  oscillator o = o(d(spoke, center), .3, freq, PI/2 + difference, freq * (spokes-1), freq);
+  //  springs.add(s(center, spoke, o));
+  //  if (i == 0) continue;
+  //  springs.add(new spring(springs.get(prev).b, springs.get(curr).b));
+  //  if (i == spokes - 1) springs.add(s(springs.get(curr).b, springs.get(0).b));
+  //  prev = curr;
+  //}
+  
+  //Creature ticktock = new Creature(springs);
   
   // Inchworm
   springs = new ArrayList<spring>();
@@ -117,6 +149,7 @@ void setup() {
   creatures = new Creature[]{
     whirligig
     //inchworm
+    //ticktock
   };
   
 }
@@ -138,10 +171,13 @@ void draw() {
   strokeWeight(15);
   line(0, ground_y + 15, max_x, ground_y + 15);
   
-  int t = 0;
+  int x = 0;
   for (int i = 20; i < max_x-20; i += 20) {
-    text(t++, i, ground_y + 20);
+    text(x++, i, ground_y + 20);
   }
+  
+  fill(white);
+  text(t, 50, ground_y + 50);
   strokeWeight(1);
 }
 
@@ -269,6 +305,156 @@ boolean mouse_in(int[] dimensions) {
   int max_y = dimensions[1] + (dimensions[3] > 0? dimensions[3] : dimensions[2]);
   return (mouseX >= min_x && mouseX <= max_x && mouseY >= min_y && mouseY <= max_y);
 }
+
+// Attempt at optimization for the whirligig creature.
+//Creature whirligig_optimizer() {
+//  int population = 100;
+//  Creature[] herd = new Creature[population];
+//  float[] distances = new float[population];
+//  for (int i = 0; i < population; i++) {
+//    herd[i] = random_whirligig();
+//  }
+//  float best_distance = 0;
+//  Creature best = new Creature();
+//  while (best_distance < 500 && !running) {
+//    for (int i = 0; i < population; i++) {
+//      Creature c = herd[i];
+//      float distance = get_distance(c);
+//      distances[i] = distance;
+//      if (distance > best_distance) {
+//        best_distance = distance;
+//        best = c;
+//        println("new best: " + best_distance + " with params: " + get_params(c));
+//      }
+//      if (random(1) < distance/best_distance) {
+//        int mate_index = floor(random(population));
+//        Creature mate = herd[mate_index];
+//        Creature baby = mate(c, mate);
+//        int baby_index = mate_index;
+//        if (distances[mate_index] > distance) baby_index = mate_index;
+//        herd[baby_index] = baby;
+//        distances[baby_index] = get_distance(baby);
+//      }
+//    }
+//  }
+//  return best;
+//}
+
+//Creature random_whirligig() {
+//  int num_spokes = 6;
+//  float[] params = new float[num_spokes*5 + 1];
+//  int i = 0;
+//  params[i++] = num_spokes;
+//  for (int s = 0; s < num_spokes; s++) {
+//    params[i++] = random(.1, .9); // amplitude
+//    params[i++] = random(2*PI + e);  // phase
+//    params[i++] = random(PI/64, PI/8); // frequency                 
+//    params[i++] = random(0, 500); // rest time
+//    params[i++] = random(0, 500); // move time
+//  }
+//  return from_params(params);
+//}
+
+//String get_params(Creature c) {
+//  float[] params = params(c);
+//  String msg = "";
+  
+//  for (float f: params) {
+//    msg += f + ", ";
+//  }
+  
+//  return msg;
+//}
+
+//Creature from_params(float[] params) {
+//  int i = 0;
+//  int num_spokes = floor(params[i++]);
+//  ArrayList<spring> springs = new ArrayList<spring>();
+//  int curr = 0;
+//  int prev = 0;
+  
+//  point_mass center = pm(p(150, 450)); // center
+//  float spoke_angle = 2*PI/num_spokes;
+  
+//  point ground = p(150, 500);   // reference point on ground.
+//  vector vcg = v(center.p, ground);  // vector to ground.
+  
+//  point cg = sum(center.p, r(vcg, 1*spoke_angle/2)); // point resting on ground below center.
+//  vcg = v(center.p, cg);                             // Vector between center and ground point.
+//  center.p.y += ground_y - cg.y;                     // Adjust center for spoke length.
+  
+//  for (int s = 0; s < num_spokes; s++) {
+//    curr = springs.size();
+//    point_mass spoke = pm(sum(center.p, r(vcg, i*spoke_angle)));
+//    float amp = params[i++];
+//    float phase = params[i++];
+//    float freq = params[i++];
+//    float rest_time = params[i++];
+//    float move_time = params[i++];
+//    oscillator o = o(d(spoke, center), amp, freq, phase, rest_time, move_time);
+//    springs.add(s(center, spoke, o));
+//    if (i == 0) continue;
+//    springs.add(new spring(springs.get(prev).b, springs.get(curr).b));
+//    if (i == num_spokes - 1) springs.add(s(springs.get(curr).b, springs.get(0).b));
+//    prev = curr;
+//  }
+  
+//  Creature c = new Creature(springs);
+//  return c;
+//}
+
+//float[] params(Creature c) {
+//  int num_spokes = 6;
+//  float[] params = new float[num_spokes*5 + 1];
+//  int i = 0; 
+//  params[i++] = num_spokes;
+//  for (spring s : c.springs) {
+//    if (s.o != null) {
+//      oscillator o = s.o;
+//      params[i++] = o.a; // amplitude
+//      params[i++] = o.p; // phase
+//      params[i++] = o.f; // frequency                 
+//      params[i++] = o.r; // rest time
+//      params[i++] = o.m; // move time
+//    }
+//  }
+//  return params;
+//}
+
+//float get_distance(Creature c) {
+//  float start = c.points.get(0).p.x;
+//  for (int t = 0; t < 1000; t++) {
+//    c.update();
+//  }
+//  float end = c.points.get(0).p.x;
+//  return end - start;
+//}
+
+//Creature mate(Creature a, Creature b) {
+//  float[] pa = params(a);
+//  float[] pb = params(b);
+//  int num_spokes = floor((random(1) < .5)? pa[0] : pb[0]);
+//  int crossover = floor(random(num_spokes));
+//  int i = 0;
+//  float[] params = new float[num_spokes*5 + 1];
+//  params[i++] = num_spokes;
+//  for (int s = 0; s < crossover; s++) {  
+//    params[i] = (random(1) < .1)? pa[i] : pa[i] + random(-.1, .1); i++;  // amplitude
+//    params[i] = (random(1) < .1)? pa[i] : pa[i] + random(-PI/16, PI/16); i++; // phase
+//    params[i] = (random(1) < .1)? pa[i] : pa[i] + random(-PI/64, PI/64); i++;  // frequency                 
+//    params[i] = (random(1) < .1)? pa[i] : max(pa[i] + random(-50, 50), 0); i++; // rest time
+//    params[i] = (random(1) < .1)? pa[i] : max(pa[i] + random(-50, 50), 0); i++;  // move time
+//  }
+//  for (int s = crossover; s < num_spokes; s++) {
+//    params[i] = (random(1) < .1)? pb[i] : pb[i] + random(-.1, .1); i++;  // amplitude
+//    params[i] = (random(1) < .1)? pb[i] : pb[i] + random(-PI/16, PI/16); i++;  // phase
+//    params[i] = (random(1) < .1)? pb[i] : pb[i] + random(-PI/64, PI/64); i++;  // frequency                 
+//    params[i] = (random(1) < .1)? pb[i] : max(pb[i] + random(-50, 50), 0); i++; // rest time
+//    params[i] = (random(1) < .1)? pb[i] : max(pb[i] + random(-50, 50), 0); i++;  // move time
+//  }
+  
+//  return from_params(params);
+//}
 
 void keyPressed() {
   switch (key) {

@@ -181,44 +181,56 @@ class oscillator {
   float a;       // amplitude
   float f;       // frequency
   float p;       // phase
-  float r;       // time spent resting
-  float m;       // time spent moving
-  boolean resting;
-  float count;   // how long we have spent resting or not resting
+  rest r;        // rest parameters
+  float curr_L;
   
   oscillator(float L, float a, float f, float p) {
     this.L = L;
     this.a = a;
     this.f = f;
     this.p = p;
+    this.curr_L = L();
   }
   
-  oscillator(float L, float a, float f, float p, float r, float m) {
+  oscillator(float L, float a, float f, float p, rest r) {
     this(L, a, f, p);
     this.r = r;
-    this.m = m;
   }
   
   // L = L(1 + asin(ft + 2PIp))
   // From Sticky Feet: Evolution in a Multi-Creature Physical Simulation https://gatech.instructure.com/courses/179608/files/21490663?wrap=1
   float L() {
-    if (r > 0) {
-      if (resting) {
-        if (count >= r){
-          // return to movement.
-          resting = !resting;
-          count = 0;
-        }
-        return L;
-      }
-      if (count >= m) {
-        // return to rest.
-        resting = !resting;
-        count = 0;
+    if (r != null) {
+      if (r.resting()) {
+        return curr_L;
       }
     }
-    return L * (1 + a * sin((f * t) + p));
+    curr_L = L * (1 + a * sin((f * t) + p));
+    return curr_L;
   }
+}
+
+class rest {
+  float active;
+  float rest;
+  float phase;        // shift cycle.
+  
+  rest(float active, float rest, float phase) {
+    this.active = active;
+    this.rest = rest;
+    this.phase = phase;
+  }
+  
+  boolean resting() {
+    float cycle = active + rest;
+    float curr = (t + phase) % cycle; // current point in cycle.
+    if (curr < active) return false;  // active time.
+    return true;                      // rest time.
+  }
+}
+
+rest r(float active, float rest, float phase) {
+  return new rest(active, rest, phase);
 }
 
 class friction {
@@ -245,8 +257,8 @@ oscillator o(float L, float a, float f, float p) {
   return new oscillator(L, a, f, p);
 }
 
-oscillator o(float L, float a, float f, float p, float r, float m) {
-  return new oscillator(L, a, f, p, r, m);
+oscillator o(float L, float a, float f, float p, rest r) {
+  return new oscillator(L, a, f, p, r);
 }
 
 friction f(float min, float max, float f, float p) {
